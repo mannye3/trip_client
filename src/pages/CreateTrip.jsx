@@ -69,8 +69,9 @@ export default function CreateTrip() {
     }
 
     try {
-      setIsLoading(true);
       setOpenDialog(false);
+      setIsLoading(true);
+      
       const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData?.location)
         .replace("{totalDays}", formData?.noOfDays)
         .replace("{traveler}", formData?.traveler)
