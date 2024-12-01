@@ -19,7 +19,7 @@ export default function Hero() {
         </Link>
       </h1>
      
-      <img src="public/tripLand.PNG" className="-mt-20"/>
+      <img src="public/tripLand.PNG" alt="Landing" className="-mt-20"/>
     </div>
   );
 }
