@@ -54,7 +54,7 @@ export default function CreateTrip() {
       localStorage.setItem("user", JSON.stringify(user));
 
       onGenerateTrip();
-        setOpenDialog(true);
+      setOpenDialog(true);
     } catch (error) {
       console.log("could not sign in with google", error);
     }
@@ -70,7 +70,7 @@ export default function CreateTrip() {
 
     try {
       setIsLoading(true);
-
+      setOpenDialog(false);
       const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData?.location)
         .replace("{totalDays}", formData?.noOfDays)
         .replace("{traveler}", formData?.traveler)
