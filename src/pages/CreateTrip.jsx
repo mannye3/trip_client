@@ -174,7 +174,7 @@ export default function CreateTrip() {
       formData.location &&
       formData.noOfDays &&
       formData.budget &&
-      formData.traveler 
+      formData.traveler
       //formData.activities?.length > 0
     );
   };
@@ -198,6 +198,7 @@ export default function CreateTrip() {
                   setPlace(v);
                   handleInputChange("location", v.label);
                 },
+                placeholder: "Type your location here",
               }}
             />
           </h2>
