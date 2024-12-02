@@ -174,8 +174,8 @@ export default function CreateTrip() {
       formData.location &&
       formData.noOfDays &&
       formData.budget &&
-      formData.traveler &&
-      formData.activities?.length > 0
+      formData.traveler 
+      //formData.activities?.length > 0
     );
   };
 
