@@ -3,7 +3,6 @@ import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import {
   SelectBudgetOptions,
   SelectTravelaList,
-  ActivityOptions,
   AI_PROMPT,
 } from "../constants/options";
 import { chatSession } from "../services/AIModel";
@@ -27,33 +26,10 @@ export default function CreateTrip() {
       console.log("please enter Trip days less than 5");
       return;
     }
-    if (name === "activities") {
-      // Handle activities as an array
-      setFormData((prev) => {
-        const currentActivities = prev.activities || [];
-        if (currentActivities.includes(value)) {
-          // Remove activity if already selected
-          return {
-            ...prev,
-            activities: currentActivities.filter(
-              (activity) => activity !== value
-            ),
-          };
-        } else {
-          // Add new activity
-          return {
-            ...prev,
-            activities: [...currentActivities, value],
-          };
-        }
-      });
-    } else {
-      // Handle other form fields normally
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
   };
 
   useEffect(() => {
@@ -95,18 +71,15 @@ export default function CreateTrip() {
     try {
       setOpenDialog(false);
       setIsLoading(true);
-
+      
       const FINAL_PROMPT = AI_PROMPT.replace("{location}", formData?.location)
         .replace("{totalDays}", formData?.noOfDays)
-        .replace("{activities}", formData?.activities?.join(", "))
         .replace("{traveler}", formData?.traveler)
         .replace("{budget}", formData?.budget)
         .replace("{totalDays}", formData?.noOfDays);
 
       const result = await chatSession.sendMessage(FINAL_PROMPT);
       const tripResponse = await result?.response?.text();
-
-      console.log(FINAL_PROMPT);
 
       if (!tripResponse) {
         throw new Error("No response received from AI");
@@ -138,7 +111,6 @@ export default function CreateTrip() {
       let parsedTripData;
       try {
         parsedTripData = JSON.parse(tripData);
-        console.log(parsedTripData);
       } catch (error) {
         console.error("Error parsing trip data:", error);
         parsedTripData = tripData; // Use unparsed data if JSON parsing fails
@@ -150,7 +122,6 @@ export default function CreateTrip() {
           noOfDays: formData.noOfDays || "",
           budget: formData.budget || "",
           traveler: formData.traveler || "",
-          activities: formData.activities || "",
         },
         tripData: parsedTripData,
         userEmail: user.email,
@@ -174,11 +145,9 @@ export default function CreateTrip() {
       formData.location &&
       formData.noOfDays &&
       formData.budget &&
-      formData.traveler &&
-      formData.activities?.length > 0
+      formData.traveler
     );
   };
-
   return (
     <div className="sm:px-10 md:px-32 lg:px-56 xl:px-72 px-5 mt-10">
       <h2 className="font-bold text-3xl">Tell us travel preference 🏕️🏝️ </h2>
@@ -282,31 +251,6 @@ export default function CreateTrip() {
                 </div>
               );
             })}
-          </div>
-
-          <div>
-            <h2 className="text-xl my-3 font-medium ">
-              What activities interest you the most?
-            </h2>
-
-            <div className="grid grid-cols-3 gap-5 mt-5">
-              {ActivityOptions.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => handleInputChange("activities", item.title)}
-                  className={`p-4 border cursor-pointer rounded-lg hover:shadow-lg 
-          ${
-            formData.activities?.includes(item.title) &&
-            "border-black shadow-lg"
-          }
-        `}
-                >
-                  <h2 className="text-4xl">{item.icon}</h2>
-                  <h2 className="font-bold text-lg">{item.title}</h2>
-                  <h2 className="text-sm text-gray-500">{item.desc}</h2>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>

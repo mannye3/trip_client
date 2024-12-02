@@ -37,6 +37,7 @@ const GetPlacePhoto = async () => {
              <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 text-xs md:text-md'>📆 {trip?.userSelections?.noOfDays} Day</h2>
              <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 text-xs md:text-md'>💰 {trip?.userSelections?.budget} Budget</h2>
              <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 text-xs md:text-md'>🥂  No. Of Traveler: {trip?.userSelections?.traveler} </h2>
+             <h2 className='p-1 px-3 bg-gray-200 rounded-full text-gray-500 text-xs md:text-md'>🎉  Activities: {trip?.userSelections?.activities} </h2>
         </div>
       </div>
 
