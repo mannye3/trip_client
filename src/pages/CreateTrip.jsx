@@ -13,6 +13,7 @@ import { GoogleAuthProvider, getAuth, signInWithPopup } from "firebase/auth";
 import { app, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import opencage from "opencage-api-client";
 
 export default function CreateTrip() {
   const [place, setPlace] = useState();
@@ -21,6 +22,8 @@ export default function CreateTrip() {
   const [openDialog, setOpenDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [locationInput, setLocationInput] = useState("");
 
   const handleInputChange = (name, value) => {
     if (name === "noOfDays" && value > 5) {
@@ -106,44 +109,87 @@ export default function CreateTrip() {
       const result = await chatSession.sendMessage(FINAL_PROMPT);
       const tripResponse = await result?.response?.text();
 
-      console.log(FINAL_PROMPT);
-
       if (!tripResponse) {
         throw new Error("No response received from AI");
       }
 
       const tripId = await saveTrips(tripResponse);
+      console.log(tripResponse);
       if (!tripId) {
         throw new Error("Failed to save trip");
       }
 
-      navigate(`/view-trip/${tripId}`);
+      //  navigate(`/view-trip/${tripId}`);
     } catch (error) {
-      console.error("Error generating trip:", error);
-      alert(`Error generating trip: ${error.message}`);
+      // console.error("Error generating trip:", error);
+      // alert(`Error generating trip: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // const saveTrips = async (tripData) => {
+  //   try {
+  //     const user = JSON.parse(localStorage.getItem("user"));
+  //     if (!user?.email) {
+  //       throw new Error("User not authenticated");
+  //     }
+
+  //     const docId = `${Date.now()}`; // Adding prefix for better organization
+
+  //     let parsedTripData;
+  //     try {
+  //       parsedTripData = JSON.parse(tripData);
+  //       console.log(parsedTripData);
+  //     } catch (error) {
+  //       console.error("Error parsing trip data:", error);
+  //       parsedTripData = tripData; // Use unparsed data if JSON parsing fails
+  //     }
+
+  //     const tripDoc = {
+  //       userSelections: {
+  //         location: formData.location || "",
+  //         noOfDays: formData.noOfDays || "",
+  //         budget: formData.budget || "",
+  //         traveler: formData.traveler || "",
+  //         activities: formData.activities || "",
+  //       },
+  //       tripData: parsedTripData,
+  //       userEmail: user.email,
+  //       id: docId,
+  //       createdAt: new Date().toISOString(),
+  //       status: "active",
+  //     };
+
+  //     const docRef = doc(db, "AITrips", docId);
+  //     await setDoc(docRef, tripDoc);
+  //     console.log("Document written with ID: ", docId);
+  //     return docId;
+  //   } catch (error) {
+  //     console.error("Error saving trip:", error);
+  //     throw error;
+  //   }
+  // };
+
   const saveTrips = async (tripData) => {
     try {
+      // Get user details from localStorage
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user?.email) {
         throw new Error("User not authenticated");
       }
 
-      const docId = `${Date.now()}`; // Adding prefix for better organization
-
+      // Parse tripData safely
       let parsedTripData;
       try {
         parsedTripData = JSON.parse(tripData);
-        console.log(parsedTripData);
+        console.log("Parsed trip data:", parsedTripData);
       } catch (error) {
         console.error("Error parsing trip data:", error);
-        parsedTripData = tripData; // Use unparsed data if JSON parsing fails
+        parsedTripData = tripData; // Use raw tripData if JSON parsing fails
       }
 
+      // Create the trip document to send to the backend
       const tripDoc = {
         userSelections: {
           location: formData.location || "",
@@ -154,20 +200,98 @@ export default function CreateTrip() {
         },
         tripData: parsedTripData,
         userEmail: user.email,
-        id: docId,
         createdAt: new Date().toISOString(),
         status: "active",
       };
 
-      const docRef = doc(db, "AITrips", docId);
-      await setDoc(docRef, tripDoc);
-      console.log("Document written with ID: ", docId);
-      return docId;
+      // Call the backend API to save the trip
+      const response = await fetch(
+        "https://trip-backend-jdfp.onrender.com/api/trips/create-trips",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`, // Include user token if required
+          },
+          body: JSON.stringify(tripDoc),
+        }
+      );
+
+      // Handle API response
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Error saving trip: ${errorData.message || response.statusText}`
+        );
+      }
+
+      const savedTrip = await response.json();
+
+      // Debugging logs
+      console.log("Response status:", response.status);
+      console.log("Saved trip response:", savedTrip?.id);
+
+      navigate(`/view-trip/${savedTrip?.id}`);
+      // Return the trip ID (assuming the backend sends it in _id field)
+      console.log("Trip saved successfully with ID:", savedTrip._id);
+      return savedTrip._id;
     } catch (error) {
       console.error("Error saving trip:", error);
-      throw error;
+      throw error; // Re-throw the error to allow callers to handle it
     }
   };
+
+  // Example usage
+
+  // const saveTrips = async (tripData) => {
+  //   try {
+  //     // Retrieve user data from localStorage
+  //     const user = JSON.parse(localStorage.getItem("user"));
+  //     if (!user?.email) {
+  //       throw new Error("User not authenticated");
+  //     }
+
+  //     // Generate a document ID if not provided
+  //     const docId = tripData.id || `${Date.now()}`;
+
+  //     // Prepare the trip document
+  //     const tripDoc = {
+  //       ...tripData,
+  //       id: docId,
+  //       userEmail: user.email,
+  //       createdAt: new Date().toISOString(),
+  //       status: tripData.status || "active", // Default to "active" if status is not provided
+  //     };
+
+  //     console.log("Prepared Trip Data:", tripDoc); // Debugging output
+
+  //     // Make API call to save trip
+  //     const response = await fetch("http://localhost:3000/api/trips/create-trips", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(tripDoc),
+  //     });
+
+  //     // Check if the response was successful
+  //     if (!response.ok) {
+  //       const errorResponse = await response.json();
+  //       console.error("API Error Response:", errorResponse);
+  //       throw new Error(`Failed to save trip: ${response.statusText}`);
+  //     }
+
+  //     // Parse and return the API response
+  //     const result = await response.json();
+  //     console.log("Trip saved successfully with ID:", result.id);
+  //     return result.id;
+  //   } catch (error) {
+  //     // Log error details for debugging
+  //     console.error("Error saving trip:", error.message);
+  //     console.error("Stack Trace:", error.stack);
+  //     throw error; // Rethrow to handle it elsewhere
+  //   }
+  // };
 
   const isFormValid = () => {
     return (
@@ -179,6 +303,33 @@ export default function CreateTrip() {
     );
   };
 
+  const handleLocationSearch = async (searchText) => {
+    try {
+      const apiKey = import.meta.env.VITE_OPENCAGE_API_KEY;
+
+      if (searchText.length > 2) {
+        const response = await opencage.geocode({
+          q: searchText,
+          key: apiKey,
+          limit: 5,
+        });
+
+        const suggestions = response.results.map((result) => ({
+          label: result.formatted,
+          value: result.formatted,
+          coordinates: {
+            lat: result.geometry.lat,
+            lng: result.geometry.lng,
+          },
+        }));
+
+        setLocationSuggestions(suggestions);
+      }
+    } catch (error) {
+      console.error("Error fetching location suggestions:", error);
+    }
+  };
+
   return (
     <div className="sm:px-10 md:px-32 lg:px-56 xl:px-72 px-5 mt-10">
       <h2 className="font-bold text-3xl">Tell us travel preference 🏕️🏝️ </h2>
@@ -187,20 +338,41 @@ export default function CreateTrip() {
       </p>
 
       <div>
-        <div className="mt-20 flex  flex-col gap-10">
-          <h2 className="text-xl my-3 font-medium ">
+        <div className="mt-20 flex flex-col gap-10">
+          <h2 className="text-xl my-3 font-medium">
             What is destination of choice?
-            <GooglePlacesAutocomplete
-              apiKey={import.meta.env.VITE_GOOGLE_PLACE_API_KEY}
-              selectProps={{
-                place,
-                onChange: (v) => {
-                  setPlace(v);
-                  handleInputChange("location", v.label);
-                },
-                placeholder: "Type your location here",
-              }}
-            />
+            <div className="relative">
+              <input
+                type="text"
+                id="location"
+                placeholder="Type your location here"
+                name="location"
+                value={locationInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setLocationInput(value);
+                  handleLocationSearch(value);
+                }}
+                className="block w-full px-3 py-2 text-gray-700 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              {locationSuggestions.length > 0 && (
+                <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setLocationInput(suggestion.label);
+                        handleInputChange("location", suggestion.label);
+                        setLocationSuggestions([]);
+                      }}
+                    >
+                      {suggestion.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </h2>
         </div>
         <div>

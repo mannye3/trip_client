@@ -19,7 +19,9 @@ const GetPlacePhoto = async () => {
  const result =  await GetPlaceDetails(data).then(resp =>{
  console.log(resp.data.places[0].photos[3].name)
  
- const photoUrl = PHOTO_REF_URL.replace('{NAME}',resp.data.places[0].photos[3].name)
+ const photoUrl = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e'
+ 
+ //PHOTO_REF_URL.replace('{NAME}',resp.data.places[0].photos[3].name)
 
  setPhotoUrl(photoUrl)
 
@@ -28,7 +30,7 @@ const GetPlacePhoto = async () => {
 
   return (
     <div>
-      <img src={photoUrl} className='h-[340px] w-full object-cover rounded-xl' />
+      <img src='https://images.unsplash.com/photo-1469474968028-56623f02e42e' className='h-[340px] w-full object-cover rounded-xl' />
 
        <div className='flex justify-between items-center'> 
         <div className='my-5 flex flex-col gap-2'>

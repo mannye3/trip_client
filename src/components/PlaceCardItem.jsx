@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { GetPlaceDetails, PHOTO_REF_URL } from '../services/GlobalApi';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { GetPlaceDetails, PHOTO_REF_URL } from "../services/GlobalApi";
 
-const PLACEHOLDER_IMAGE = 'https://aitrip.tubeguruji.com/placeholder.jpg';
+const PLACEHOLDER_IMAGE = "https://images.unsplash.com/photo-1469474968028-56623f02e42e";
 
 export default function PlaceCardItem({ place }) {
   const [photoUrl, setPhotoUrl] = useState(null);
@@ -17,15 +17,15 @@ export default function PlaceCardItem({ place }) {
   const GetPlacePhoto = async () => {
     setIsLoading(true);
     try {
-      const data = { textQuery: place.placeName };
+      const data = { textQuery: place.name };
       const resp = await GetPlaceDetails(data);
       const photoName = resp?.data?.places?.[0]?.photos?.[3]?.name;
       if (photoName) {
-        const photoUrl = PHOTO_REF_URL.replace('{NAME}', photoName);
+        const photoUrl = PHOTO_REF_URL.replace("{NAME}", photoName);
         setPhotoUrl(photoUrl);
       }
     } catch (error) {
-      console.error('Error fetching place photo:', error);
+      console.error("Error fetching place photo:", error);
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +34,7 @@ export default function PlaceCardItem({ place }) {
   return (
     <Link
       to={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        place?.placeName
+        place?.name
       )}`}
       target="_blank"
       rel="noopener noreferrer"
@@ -47,18 +47,16 @@ export default function PlaceCardItem({ place }) {
         ) : (
           <img
             src={photoUrl || PLACEHOLDER_IMAGE}
-            alt={place?.placeName || 'Place'}
+            alt={place?.name || "Place"}
             className="w-[130px] object-cover h-[130px] rounded-xl"
           />
         )}
         <div>
-          <h2 className="font-bold text-lg">{place?.placeName}</h2>
-          <p className="text-sm text-gray-400">{place?.placeDetails}</p>
-           <p className="text-sm text-gray-400">
-                      {place.ticketPricing}
-                    </p>
-                  
-          <h2 className="mt-2">⌚ {place?.timeTravel}</h2>
+          <h2 className="font-bold text-lg">{place?.name}</h2>
+          <p className="text-sm text-gray-400">{place?.description}</p>
+          <p className="text-sm text-gray-400">{place.fees}</p>
+
+          <h2 className="mt-2">⌚ {place?.bestTime}</h2>
         </div>
       </div>
     </Link>
